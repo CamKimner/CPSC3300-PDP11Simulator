@@ -30,6 +30,8 @@ address_phrase_t src, dst;
 
 void loadMem();
 void get_operand(address_phrase_t*);
+void printSrcDst();
+void printRegisters();
 
 int main(int argc, char **argv) {
     bool verboseMode = false;
@@ -67,31 +69,34 @@ int main(int argc, char **argv) {
             printf("halt instruction\n"); 
             halt = 1; 
         } else if( (ir >> 12) == 01 ){   /* LSI-11 manual ref 4-25 */ 
-            printf("mov instruction\n"); 
+            printf("mov instruction "); 
             get_operand( &src ); 
         } else if( (ir >> 12) == 02 ){ //ref 4-26
-            printf("cmp instruction\n");
+            printf("cmp instruction ");
             
         } else if( (ir >> 12) == 06) { //ref 4-27
-            printf("add instruction\n");
+            printf("add instruction ");
 
         } else if( (ir >> 12) == 016) { //ref 4-28
-            printf("sub instruction\n");
+            printf("sub instruction ");
         } else if( (ir >> 9) == 077) { //ref 4-61
-            printf("sob instruction\n");
+            printf("sob instruction ");
         } else if( (ir >> 8) == 001) { //ref 4-35
-            printf("br instruction\n");
+            printf("br instruction ");
         } else if( (ir >> 8) == 002) { //ref 4-36
-            printf("bne instruction\n");
+            printf("bne instruction ");
         } else if( (ir >> 8) == 003) { //ref 4-37
-            printf("beq instruction\n");
+            printf("beq instruction ");
         } else if( (ir >> 6) == 0062) { //ref 4-13
-            printf("asr instruction\n");
+            printf("asr instruction ");
         } else if( (ir >> 6) == 0063) { //ref 4-14
-            printf("asl instruction\n");
+            printf("asl instruction ");
         } else{
-            printf("Error: no matching instruction");
+            printf("Error: no matching instruction" );
         }
+
+        printSrcDst();
+        printRegisters();
     }
 
     return 0;
@@ -187,4 +192,16 @@ void get_operand(address_phrase_t *phrase) {
             printf("unimplemented address mode %o\n", phrase->mode);
             break;
     }
+}
+
+void printSrcDst(){
+    printf("sm %d, ", src.mode);
+    printf("sr %d ", src.reg);
+    printf("dm %d ", dst.mode);
+    printf("dr %d\n", dst.reg);
+}
+
+void printRegisters(){
+    printf(" R0:0%06o R2:0%06o R4:0%06o R6:0%06o\n", reg[0], reg[2], reg[4], reg[6]);
+    printf(" R1:0%06o R3:0%06o R5:0%06o R7:0%06o\n", reg[1], reg[3], reg[5], reg[7]);
 }
