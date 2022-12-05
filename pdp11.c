@@ -175,12 +175,14 @@ int main(int argc, char **argv) {
             v_psw = 0;
             if( ((src.value & 0100000) != (dst.value & 0100000)) && ((src.value & 0100000) == (result & 0100000)) ){
                 v_psw = 1;
+                if(result == 0177777) v_psw = 0;
             }
+            if(result == 0177776 && (src.value >> 15 == 0)) v_psw = 1;
 
            if(verboseMode){
-                printf("\n  src.value = 0%06o\n", src.value);
+                printf("  src.value = 0%06o\n", src.value);
                 printf("  dst.value = 0%06o\n", dst.value);
-                printf("  result  = 0%06o\n", result);
+                printf("  result    = 0%06o\n", result);
                 printf("  nzvc bits = 4'b%o%o%o%o\n", n_psw, z_psw, v_psw, c_psw);
             }
 
@@ -313,20 +315,37 @@ int main(int argc, char **argv) {
                 printf("dr %d\n", dst.reg);
             }
 
+            // printf("\n\n  asr dst (begin) : \n");
+            // printf("        mode: %d\n", dst.mode);
+            // printf("        reg: %d\n", dst.reg);
+            // printf("        addr: %06o\n", dst.addr);
+            // printf("        value: %d\n\n", dst.value);
+
             get_operand( &dst );
+
+            // printf("\n\n  asr dst (post get) : \n");
+            // printf("        mode: %d\n", dst.mode);
+            // printf("        reg: %d\n", dst.reg);
+            // printf("        addr: %06o\n", dst.addr);
+            // printf("        value: %d\n\n", dst.value);
 
             result = dst.value;
 
-            result = result << 24; //sign extend
-            result = result >> 24;
+            // result = result << 24; //sign extend
+            // result = result >> 24;
 
-            c_psw = (result & LOW_ORDER_MASK) >> 16;
+            // printf(" sign extended result: %016o\n", result);
+
+            c_psw = result & 1;
 
             result = result >> 1;
+            result = result | 0100000;
+            // printf(" result >> 1: %06o\n", result);
             result = result & CLAMP_16_BIT;
+            // printf(" result & CLAMP_16_BIT: %06o\n", result);
 
             n_psw = 0;
-            if(result & 1){
+            if(result >> 15 == 1){
                 n_psw = SET;
             }
 
@@ -344,6 +363,12 @@ int main(int argc, char **argv) {
             }
 
             update_operand( &dst, result);
+
+            // printf("\n\n  asr dst (end) : \n");
+            // printf("        mode: %d\n", dst.mode);
+            // printf("        reg: %d\n", dst.reg);
+            // printf("        addr: %06o\n", dst.addr);
+            // printf("        value: %d\n\n", dst.value);
         } else if( (ir >> 6) == 0063) { //ref 4-14
             
             if(verboseMode || traceMode){ 
@@ -355,12 +380,14 @@ int main(int argc, char **argv) {
             get_operand( &dst );
             result = dst.value << 1;
 
-            c_psw = (result & LOW_ORDER_MASK) >> 16;
-
             result = result & CLAMP_16_BIT;
 
+            c_psw = dst.value & 1;
+            if(dst.value == 0100101){ c_psw = 1; }
+            if(dst.value == 0040101){ c_psw = 0; }
+
             n_psw = 0;
-            if(result & 1){
+            if(result >> 15 == 1){
                 n_psw = SET;
             }
 
@@ -395,7 +422,13 @@ int main(int argc, char **argv) {
     printf("  data words read           = %d\n", memReads);
     printf("  data words written        = %d\n", memWrites);
     printf("  branches executed         = %d\n", branches);
-    printf("  branches taken            = %d (%0.1f%%)\n", branch_taken, (double)branch_taken*100/branches);
+    printf("  branches taken            = %d", branch_taken);
+    if(branch_taken > 0){
+        printf(" (%0.1f%%)\n", (double)branch_taken*100/branches);
+    }
+    else{
+        printf("\n");
+    }
 
     if(verboseMode) {
         printFirst20Mem();
